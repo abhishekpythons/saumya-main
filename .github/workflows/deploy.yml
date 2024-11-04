@@ -3,7 +3,7 @@ name: Deploy Jekyll Site
 on:
   push:
     branches:
-      - main  # Change this to your default branch if it's different
+      - main
 
 jobs:
   build:
@@ -16,12 +16,21 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '2.7'  # Specify the Ruby version you want to use
+          ruby-version: '3.1'
+
+      - name: Cache Ruby Gems
+        uses: actions/cache@v3
+        with:
+          path: vendor/bundle
+          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gems-
 
       - name: Install dependencies
         run: |
-          gem install bundler
-          bundle install
+          sudo apt-get install -y build-essential
+          gem install bundler || { echo 'Bundler install failed'; exit 1; }
+          bundle install || { echo 'Bundle install failed'; exit 1; }
 
       - name: Build Jekyll site
         run: |
@@ -32,4 +41,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./_site
-          publish_branch: gh-pages  # The branch where you want to deploy
+          publish_branch: gh-pages
